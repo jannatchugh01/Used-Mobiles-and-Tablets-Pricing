@@ -299,7 +299,7 @@ http://localhost:5173
 ## 1. Clone the Repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/used-device-price-prediction.git
+git clone https://github.com/jannatchugh01/Used-Mobiles-and-Tablets-Pricing.git
 ```
 
 Move into the project:
