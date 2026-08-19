@@ -1,20 +1,35 @@
-# Used-Mobiles-and-Tablets-Pricing
+# Used Mobiles & Tablets Price Prediction
 
-An end-to-end Machine Learning web application that predicts the **normalized resale price of used mobile devices** based on device specifications, usage information, and pricing features.
+An end-to-end **Machine Learning application** that predicts the resale value of used mobile phones and tablets from their specifications and usage history.
 
-The project integrates a trained **Scikit-learn Machine Learning pipeline** with a **FastAPI backend**, **React frontend**, and **Docker**, demonstrating the complete workflow from model development to a functional ML-powered web application.
+I built this project to take a typical tabular ML problem beyond a notebook: train the model, save the complete preprocessing pipeline, expose it through an API, connect it to a frontend, and package the backend with Docker.
 
-> **Note:** The prediction is presented in normalized units because the original dataset does not document the normalization formula. Therefore, the predicted value is intentionally not reverse-normalized into a currency value.
+> **Important:** The model predicts the target in normalized units because the original dataset does not document the normalization formula. I therefore do not convert the prediction into a currency value.
 
 ---
 
-## 🚀 Project Overview
+## Problem
 
-The objective of this project is to estimate the resale value of used phones and tablets using Machine Learning.
+Used-device pricing depends on several factors such as:
 
-Users enter device specifications through the React web interface. The frontend sends the data to the FastAPI REST API, which validates the request and passes it to the trained Machine Learning pipeline. The generated prediction is then returned to the frontend and displayed to the user.
+* Brand
+* Operating system
+* RAM
+* Storage
+* Camera specifications
+* Battery
+* Network support
+* Release year
+* Usage duration
+* Original normalized price
 
-### Application Workflow
+The goal of this project is to estimate the **normalized resale price** from these device characteristics.
+
+The application allows a user to enter the device details through a web interface and receive a prediction from the trained ML model.
+
+---
+
+# How It Works
 
 ```text
 User
@@ -22,202 +37,151 @@ User
   ▼
 React Frontend
   │
-  │  POST /predict
+  │  JSON request
   ▼
-FastAPI Backend
+FastAPI API
   │
   ▼
 Pydantic Validation
   │
   ▼
+Pandas DataFrame
+  │
+  ▼
 Scikit-learn Pipeline
   │
   ▼
-Machine Learning Model
+Trained ML Model
   │
   ▼
-Normalized Used Price
+Predicted Normalized Used Price
   │
   ▼
-React Result Interface
+React Interface
 ```
 
----
-
-## ✨ Features
-
-- Machine Learning-based used device price prediction
-- End-to-end Scikit-learn preprocessing pipeline
-- REST API developed using FastAPI
-- Request validation using Pydantic
-- Interactive React frontend
-- Real-time frontend-backend communication
-- Dockerized FastAPI backend
-- Automatic Swagger API documentation
-- API health-check endpoint
-- Error handling and validation
-- Reproducible application environment
+The application separates the **model**, **API**, and **frontend**, making it easier to test and run each part independently.
 
 ---
 
-## 🧠 Machine Learning
+# Machine Learning Workflow
 
-The trained Machine Learning model is stored as a serialized Scikit-learn pipeline:
+The ML workflow was developed in the Jupyter notebook before being integrated into the application.
+
+### 1. Data Exploration
+
+The dataset was first explored to understand:
+
+* Feature types
+* Missing values
+* Numerical distributions
+* Categorical variables
+* Relationships between device characteristics and resale price
+
+### 2. Feature Preparation
+
+The model uses device and usage information including:
+
+| Feature                | Description               |
+| ---------------------- | ------------------------- |
+| `device_brand`         | Device manufacturer       |
+| `os`                   | Operating system          |
+| `screen_size`          | Screen size               |
+| `four_g`               | 4G support                |
+| `five_g`               | 5G support                |
+| `rear_camera_mp`       | Rear camera resolution    |
+| `front_camera_mp`      | Front camera resolution   |
+| `internal_memory`      | Internal storage          |
+| `ram`                  | RAM                       |
+| `battery`              | Battery specification     |
+| `weight`               | Device weight             |
+| `release_year`         | Device release year       |
+| `days_used`            | Number of days used       |
+| `normalized_new_price` | Normalized original price |
+
+### 3. Preprocessing Pipeline
+
+Instead of saving only the trained estimator, the project saves the **complete Scikit-learn preprocessing and model pipeline**.
+
+```text
+Input Data
+    ↓
+Preprocessing
+    ↓
+Feature Transformation
+    ↓
+Trained Estimator
+    ↓
+Prediction
+```
+
+This means the same transformations used during training can be applied consistently when the API receives new data.
+
+### 4. Model Serialization
+
+The trained pipeline is stored using Joblib:
 
 ```text
 model/resale_price_pipeline.joblib
 ```
 
-Using a pipeline allows the preprocessing transformations and trained estimator to be used together during inference.
+The FastAPI backend loads this pipeline during inference.
 
-The API converts the incoming request into a Pandas DataFrame and sends it directly to the saved pipeline for prediction.
+---
 
-### Input Features
+# Prediction Target
 
-The model uses the following device information:
-
-| Feature | Description |
-|---|---|
-| `device_brand` | Manufacturer/brand of the device |
-| `os` | Operating system |
-| `screen_size` | Screen size |
-| `four_g` | Whether the device supports 4G |
-| `five_g` | Whether the device supports 5G |
-| `rear_camera_mp` | Rear camera resolution |
-| `front_camera_mp` | Front camera resolution |
-| `internal_memory` | Internal storage capacity |
-| `ram` | RAM capacity |
-| `battery` | Battery specification |
-| `weight` | Device weight |
-| `release_year` | Year in which the device was released |
-| `days_used` | Number of days the device has been used |
-| `normalized_new_price` | Normalized price of the device when new |
-
-### Prediction Target
-
-The application predicts:
+The model predicts:
 
 ```text
 normalized_used_price
 ```
 
-The prediction is intentionally returned in normalized form.
+The output is intentionally kept in normalized form.
 
----
+The original dataset does not provide enough information to reconstruct the original currency scale, so converting the prediction into INR or another currency would require an unsupported assumption.
 
-## 🏗️ Project Structure
+For example, the API can return:
 
-```text
-Used Pricing/
-│
-├── Api/
-│   ├── main.py
-│   ├── predictor.py
-│   ├── schemas.py
-│   └── requirements.txt
-│
-├── frontend/
-│   ├── public/
-│   ├── src/
-│   │   ├── App.jsx
-│   │   ├── App.css
-│   │   ├── index.css
-│   │   └── main.jsx
-│   │
-│   ├── .gitignore
-│   ├── eslint.config.js
-│   ├── index.html
-│   ├── package.json
-│   ├── package-lock.json
-│   └── vite.config.js
-│
-├── model/
-│   └── resale_price_pipeline.joblib
-│
-├── Notebook/
-│   └── Machine Learning notebooks
-│
-├── .dockerignore
-├── .gitignore
-├── Dockerfile
-└── README.md
+```json
+{
+  "predicted_normalized_used_price": 4.2191,
+  "unit": "normalized"
+}
 ```
 
 ---
 
-## 🛠️ Tech Stack
+# Application
 
-### Machine Learning & Data Processing
+## React Frontend
 
-- Python
-- Pandas
-- NumPy
-- Scikit-learn
-- Joblib
-- Jupyter Notebook
+The frontend provides a form where users enter the device specifications.
 
-### Backend
+The application then:
 
-- FastAPI
-- Pydantic
-- Uvicorn
-
-### Frontend
-
-- React
-- Vite
-- JavaScript
-- HTML
-- CSS
-
-### Containerization
-
-- Docker
-- Docker Desktop
-- WSL2
-
-### Version Control
-
-- Git
-- GitHub
+1. Collects the input values
+2. Builds the JSON request
+3. Sends it to the FastAPI `/predict` endpoint
+4. Receives the prediction
+5. Displays the result
+6. Handles validation and API errors
 
 ---
 
-# 🔌 FastAPI Backend
+## FastAPI Backend
 
-The backend exposes REST API endpoints for checking application health and generating predictions.
+The backend exposes REST endpoints for the application.
 
-When running locally, the API is available at:
+### Health Check
 
 ```text
-http://127.0.0.1:8000
-```
-
----
-
-## 📖 Swagger API Documentation
-
-FastAPI automatically generates interactive API documentation.
-
-After starting the backend, open:
-
-```text
-http://127.0.0.1:8000/docs
-```
-
-The Swagger interface can be used to test the prediction endpoint directly.
-
----
-
-## ❤️ Health Check
-
-### Endpoint
-
-```http
 GET /health
 ```
 
-### Example Response
+Returns the API and model status.
+
+Example:
 
 ```json
 {
@@ -226,123 +190,153 @@ GET /health
 }
 ```
 
-A successful response confirms that the API is running.
+### Prediction
 
----
-
-## 🔮 Prediction Endpoint
-
-### Endpoint
-
-```http
+```text
 POST /predict
 ```
 
-The endpoint accepts device information and returns the predicted normalized used price.
+Receives the device specifications and returns the predicted normalized used price.
 
-### Example Request
+### API Documentation
 
-```json
-{
-  "device_brand": "Samsung",
-  "os": "Android",
-  "screen_size": 6.5,
-  "four_g": "yes",
-  "five_g": "yes",
-  "rear_camera_mp": 50,
-  "front_camera_mp": 12,
-  "internal_memory": 128,
-  "ram": 8,
-  "battery": 5000,
-  "weight": 190,
-  "release_year": 2022,
-  "days_used": 300,
-  "normalized_new_price": 4.7
-}
-```
-
-### Example Response
-
-```json
-{
-  "predicted_normalized_used_price": 4.2191,
-  "unit": "normalized",
-  "note": "Prediction is presented in normalized units because the original dataset does not document the normalization formula."
-}
-```
-
----
-
-# 🌐 React Frontend
-
-The project includes a React-based user interface where users can enter device information and request a prediction.
-
-The frontend:
-
-1. Collects device specifications from the user.
-2. Converts the form data into the required JSON structure.
-3. Sends a POST request to the FastAPI `/predict` endpoint.
-4. Receives the prediction from the backend.
-5. Displays the normalized prediction in the browser.
-6. Handles API and validation errors.
-
-During development, the frontend runs at:
+FastAPI automatically provides interactive Swagger documentation at:
 
 ```text
-http://localhost:5173
+/docs
+```
+
+This makes it possible to test the API without using the React frontend.
+
+---
+
+# Input Validation
+
+The API uses **Pydantic** models to validate incoming requests before they reach the ML pipeline.
+
+This helps catch:
+
+* Missing fields
+* Incorrect data types
+* Invalid request structures
+
+For invalid requests, the API returns an appropriate validation response rather than passing malformed data directly to the model.
+
+---
+
+# Docker
+
+The FastAPI backend is Dockerized to make the application environment reproducible.
+
+The Docker setup packages:
+
+* Python environment
+* Required dependencies
+* FastAPI application
+* ML pipeline
+
+This reduces dependency-related differences between development environments.
+
+---
+
+# Project Structure
+
+```text
+Used-Mobiles-and-Tablets-Pricing/
+│
+├── Api/
+│   ├── main.py
+│   ├── predictor.py
+│   ├── schemas.py
+│   └── requirements.txt
+│
+├── Notebook/
+│   └── Machine Learning notebooks
+│
+├── frontend/
+│   ├── public/
+│   └── src/
+│       ├── App.jsx
+│       ├── App.css
+│       ├── index.css
+│       └── main.jsx
+│
+├── model/
+│   └── resale_price_pipeline.joblib
+│
+├── Dockerfile
+├── .dockerignore
+├── .gitignore
+└── README.md
 ```
 
 ---
 
-# ⚙️ Running the Project Locally
+# Tech Stack
 
-## 1. Clone the Repository
+### Machine Learning
+
+* Python
+* Pandas
+* NumPy
+* Scikit-learn
+* Joblib
+* Jupyter Notebook
+
+### Backend
+
+* FastAPI
+* Pydantic
+* Uvicorn
+
+### Frontend
+
+* React
+* Vite
+* JavaScript
+* HTML
+* CSS
+
+### Deployment / Environment
+
+* Docker
+
+### Version Control
+
+* Git
+* GitHub
+
+---
+
+# Running Locally
+
+## 1. Clone the repository
 
 ```bash
 git clone https://github.com/jannatchugh01/Used-Mobiles-and-Tablets-Pricing.git
+
+cd Used-Mobiles-and-Tablets-Pricing
 ```
 
-Move into the project:
-
-```bash
-cd used-device-price-prediction
-```
-
----
-
-## 2. Set Up the Python Environment
-
-Create a virtual environment:
+## 2. Create a Python environment
 
 ```bash
 python -m venv venv
 ```
 
-### Windows
-
-Activate the environment:
-
-```bash
-venv\Scripts\activate
-```
-
-Install the backend dependencies:
+Activate the environment and install the backend dependencies:
 
 ```bash
 pip install -r Api/requirements.txt
 ```
 
----
-
-## 3. Run the FastAPI Backend
-
-From the project root, run:
+## 3. Start FastAPI
 
 ```bash
 uvicorn Api.main:app --host 0.0.0.0 --port 8000
 ```
 
-The API should now be available at:
+The API will be available at:
 
 ```text
 http://127.0.0.1:8000
@@ -354,95 +348,43 @@ Swagger documentation:
 http://127.0.0.1:8000/docs
 ```
 
----
+## 4. Start the React frontend
 
-# 🎨 Running the React Frontend
-
-Open another terminal and move into the frontend directory:
+Open another terminal:
 
 ```bash
 cd frontend
-```
-
-Install the Node.js dependencies:
-
-```bash
 npm install
-```
-
-Start the Vite development server:
-
-```bash
 npm run dev
 ```
 
-Open:
-
-```text
-http://localhost:5173
-```
-
-The React application should now be running.
-
-> The FastAPI backend must also be running for predictions to work.
+The frontend will be available through the Vite development server.
 
 ---
 
-# 🐳 Running the Backend with Docker
+# Docker Setup
 
-The FastAPI backend can also be run inside a Docker container.
-
-## Build the Docker Image
-
-Run the following command from the project root:
+Build the backend image:
 
 ```bash
 docker build -t used-pricing-api .
 ```
 
----
-
-## Run the Docker Container
+Run the container:
 
 ```bash
 docker run -p 8000:8000 --name used-pricing-container used-pricing-api
 ```
 
-The API will be accessible at:
-
-```text
-http://127.0.0.1:8000
-```
-
-Swagger documentation:
-
-```text
-http://127.0.0.1:8000/docs
-```
+The API will then be available on port `8000`.
 
 ---
 
-## Stop the Container
-
-```bash
-docker stop used-pricing-container
-```
-
----
-
-## Remove the Container
-
-```bash
-docker rm used-pricing-container
-```
-
----
-
-# 🧪 API Testing
+# API Testing
 
 The API was tested using FastAPI's Swagger interface.
 
-The following endpoints were verified:
+The main endpoints include:
 
 ```text
 GET  /
@@ -451,182 +393,46 @@ POST /predict
 GET  /docs
 ```
 
-A valid prediction request returns:
-
-```text
-200 OK
-```
-
-Invalid or incomplete request bodies are rejected by FastAPI/Pydantic with:
-
-```text
-422 Unprocessable Entity
-```
+A valid prediction request returns a successful response, while invalid request bodies are rejected through Pydantic validation.
 
 ---
 
-# 🔒 Input Validation
+# What I Learned
 
-The backend uses Pydantic models to define the expected API request structure.
+The main learning from this project was moving from **model development to model integration**.
 
-```python
-class DeviceInput(BaseModel):
-    device_brand: str
-    os: str
-    screen_size: float
-    four_g: str
-    five_g: str
-    rear_camera_mp: float
-    front_camera_mp: float
-    internal_memory: float
-    ram: float
-    battery: float
-    weight: float
-    release_year: int
-    days_used: int
-    normalized_new_price: float
-```
+Building the model in a notebook is only one part of an ML application. I also had to think about how the model would receive new data, how inputs should be validated, how predictions should be exposed through an API, and how the application could be run consistently.
 
-This prevents malformed requests from being passed directly to the Machine Learning model.
+This project gave me hands-on practice with:
+
+* Exploratory data analysis
+* Feature preprocessing
+* Scikit-learn pipelines
+* Model serialization
+* ML inference
+* REST APIs
+* Request validation
+* React and API integration
+* Docker
+* Local application testing
 
 ---
 
-# 🔄 Frontend-Backend Integration
+# Limitations
 
-The React application communicates with FastAPI through HTTP requests.
+There are a few limitations to keep in mind:
 
-```text
-React
-   │
-   │ JSON Request
-   ▼
-POST /predict
-   │
-   ▼
-FastAPI
-   │
-   ▼
-Pydantic Validation
-   │
-   ▼
-Pandas DataFrame
-   │
-   ▼
-Scikit-learn Pipeline
-   │
-   ▼
-Prediction
-   │
-   ▼
-JSON Response
-   │
-   ▼
-React Prediction Card
-```
-
-This architecture separates the Machine Learning/backend logic from the user interface.
+* The prediction target is available only in normalized form.
+* The original dataset does not document the normalization formula.
+* The model's performance depends on the quality and coverage of the original dataset.
+* The application is intended as a demonstration of an end-to-end ML workflow rather than a production pricing system.
 
 ---
 
-# 📊 Prediction Output
-
-The final application displays results such as:
-
-```text
-Predicted Normalized Used Price
-
-4.2191
-
-Unit: normalized
-```
-
-The model output is **not converted into INR, USD, or another currency**.
-
-The original dataset does not provide sufficient documentation for the normalization formula used for the price variables. Attempting to reverse the normalization without this information would require making an unsupported assumption.
-
-Therefore, the application presents the model output directly in normalized units.
-
----
-
-# 🐳 Why Docker?
-
-Docker is used to package the FastAPI application, Python dependencies, and Machine Learning environment into a reproducible container.
-
-This helps avoid problems caused by differences in:
-
-- Python versions
-- Scikit-learn versions
-- NumPy versions
-- Joblib versions
-- Operating systems
-- Local development environments
-
-The Dockerized application can therefore run in a consistent environment.
-
----
-
-# 📌 Key Learning Outcomes
-
-This project demonstrates practical experience with:
-
-- Exploratory Data Analysis
-- Data preprocessing
-- Machine Learning model development
-- Scikit-learn pipelines
-- Model serialization using Joblib
-- Model inference
-- REST API development
-- FastAPI
-- Pydantic validation
-- React
-- Vite
-- Frontend-backend integration
-- HTTP requests
-- JSON APIs
-- API error handling
-- Docker
-- WSL2
-- Git and GitHub
-- End-to-end Machine Learning application development
-
----
-
-# 🚀 Future Improvements
-
-Possible future enhancements include:
-
-- [ ] Deploy the application to a cloud platform
-- [ ] Dockerize the React frontend
-- [ ] Add Docker Compose for frontend and backend orchestration
-- [ ] Improve frontend UI/UX
-- [ ] Add automated API tests
-- [ ] Add frontend tests
-- [ ] Add CI/CD using GitHub Actions
-- [ ] Add model versioning
-- [ ] Add application logging
-- [ ] Add monitoring
-- [ ] Add model explainability
-- [ ] Add prediction history
-- [ ] Improve API validation constraints
-
----
-
-# 👩‍💻 Author
+## Author
 
 **Jannat Chugh**
 
-B.Tech – Electronics and Communication Engineering (Artificial Intelligence)
+B.Tech ECE-AI | Data Analytics & Data Science
 
-Interested in:
-
-- Data Analytics
-- Data Science
-- Machine Learning
-- Artificial Intelligence
-- End-to-End ML Applications
-
----
-
-## ⭐ Support
-
-If you found this project interesting or useful, consider giving the repository a ⭐.
+[GitHub](https://github.com/jannatchugh01) • [Portfolio](https://jannatchugh01.github.io/)
